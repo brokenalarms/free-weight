@@ -27,6 +27,19 @@
 		A10018 /* CompareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10018; };
 		A10019 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10019; };
 		A10020 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B10020; };
+		A10021 /* Exercise.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10021; };
+		A10022 /* WorkoutTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10022; };
+		A10023 /* ProgressionRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10023; };
+		A10024 /* Program.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10024; };
+		A10025 /* WorkoutLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10025; };
+		A10026 /* WorkoutStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10026; };
+		A10027 /* ProgramBrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10027; };
+		A10028 /* ProgramEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10028; };
+		A10029 /* TemplateEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10029; };
+		A10030 /* WorkoutLandingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10030; };
+		A10031 /* QuickLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10031; };
+		A10032 /* WorkoutOverlayChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10032; };
+		A10033 /* WorkoutDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10033; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -50,6 +63,19 @@
 		B10018 /* CompareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompareView.swift; sourceTree = "<group>"; };
 		B10019 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		B10020 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B10021 /* Exercise.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Exercise.swift; sourceTree = "<group>"; };
+		B10022 /* WorkoutTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutTemplate.swift; sourceTree = "<group>"; };
+		B10023 /* ProgressionRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressionRule.swift; sourceTree = "<group>"; };
+		B10024 /* Program.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Program.swift; sourceTree = "<group>"; };
+		B10025 /* WorkoutLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutLog.swift; sourceTree = "<group>"; };
+		B10026 /* WorkoutStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutStore.swift; sourceTree = "<group>"; };
+		B10027 /* ProgramBrowseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgramBrowseView.swift; sourceTree = "<group>"; };
+		B10028 /* ProgramEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgramEditorView.swift; sourceTree = "<group>"; };
+		B10029 /* TemplateEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateEditorView.swift; sourceTree = "<group>"; };
+		B10030 /* WorkoutLandingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutLandingView.swift; sourceTree = "<group>"; };
+		B10031 /* QuickLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLogView.swift; sourceTree = "<group>"; };
+		B10032 /* WorkoutOverlayChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutOverlayChip.swift; sourceTree = "<group>"; };
+		B10033 /* WorkoutDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDetailView.swift; sourceTree = "<group>"; };
 		C10001 /* FreeWeight.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FreeWeight.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -108,8 +134,21 @@
 				B10003 /* PhotoAngle.swift */,
 				B10004 /* ProgressEntry.swift */,
 				B10005 /* ProgressTimeline.swift */,
+				E10012 /* Workout */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		E10012 /* Workout */ = {
+			isa = PBXGroup;
+			children = (
+				B10021 /* Exercise.swift */,
+				B10022 /* WorkoutTemplate.swift */,
+				B10023 /* ProgressionRule.swift */,
+				B10024 /* Program.swift */,
+				B10025 /* WorkoutLog.swift */,
+			);
+			path = Workout;
 			sourceTree = "<group>";
 		};
 		E10005 /* Storage */ = {
@@ -118,6 +157,7 @@
 				B10006 /* FolderBookmarkManager.swift */,
 				B10007 /* ProgressFileManager.swift */,
 				B10008 /* ThumbnailCache.swift */,
+				B10026 /* WorkoutStore.swift */,
 			);
 			path = Storage;
 			sourceTree = "<group>";
@@ -140,6 +180,7 @@
 				E10009 /* Timeline */,
 				E10010 /* Compare */,
 				E10011 /* Settings */,
+				E10013 /* Workout */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -177,6 +218,20 @@
 				B10019 /* SettingsView.swift */,
 			);
 			path = Settings;
+			sourceTree = "<group>";
+		};
+		E10013 /* Workout */ = {
+			isa = PBXGroup;
+			children = (
+				B10027 /* ProgramBrowseView.swift */,
+				B10028 /* ProgramEditorView.swift */,
+				B10029 /* TemplateEditorView.swift */,
+				B10030 /* WorkoutLandingView.swift */,
+				B10031 /* QuickLogView.swift */,
+				B10032 /* WorkoutOverlayChip.swift */,
+				B10033 /* WorkoutDetailView.swift */,
+			);
+			path = Workout;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -267,6 +322,19 @@
 				A10017 /* ThumbnailView.swift in Sources */,
 				A10018 /* CompareView.swift in Sources */,
 				A10019 /* SettingsView.swift in Sources */,
+				A10021 /* Exercise.swift in Sources */,
+				A10022 /* WorkoutTemplate.swift in Sources */,
+				A10023 /* ProgressionRule.swift in Sources */,
+				A10024 /* Program.swift in Sources */,
+				A10025 /* WorkoutLog.swift in Sources */,
+				A10026 /* WorkoutStore.swift in Sources */,
+				A10027 /* ProgramBrowseView.swift in Sources */,
+				A10028 /* ProgramEditorView.swift in Sources */,
+				A10029 /* TemplateEditorView.swift in Sources */,
+				A10030 /* WorkoutLandingView.swift in Sources */,
+				A10031 /* QuickLogView.swift in Sources */,
+				A10032 /* WorkoutOverlayChip.swift in Sources */,
+				A10033 /* WorkoutDetailView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

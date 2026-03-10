@@ -6,6 +6,7 @@ final class AppState {
     var timeline = ProgressTimeline()
     var pinnedEntry: ProgressEntry?
     var pinnedAngle: PhotoAngle = .front
+    var workoutStore: WorkoutStore?
 
     var hasFolder: Bool { rootFolderURL != nil }
 
@@ -15,5 +16,13 @@ final class AppState {
         if let entries = try? fm.loadTimeline() {
             timeline.entries = entries
         }
+    }
+
+    func setupWorkoutStore() {
+        guard let url = rootFolderURL else { return }
+        let store = WorkoutStore(rootURL: url)
+        try? store.loadProgram()
+        try? store.loadAllLogs()
+        workoutStore = store
     }
 }

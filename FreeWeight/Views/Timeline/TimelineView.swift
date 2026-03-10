@@ -7,6 +7,8 @@ struct ProgressTimelineView: View {
     @State private var showSettings = false
     @State private var displayedAngle: PhotoAngle = .front
     @State private var showCompare = false
+    @State private var showWorkoutDetail = false
+    @State private var selectedWorkoutLog: WorkoutLog?
 
     private var entries: [ProgressEntry] { appState.timeline.entries }
 
@@ -53,6 +55,11 @@ struct ProgressTimelineView: View {
             .sheet(isPresented: $showSettings) {
                 SettingsView()
                     .environment(appState)
+            }
+            .navigationDestination(isPresented: $showWorkoutDetail) {
+                if let log = selectedWorkoutLog {
+                    WorkoutDetailView(log: log)
+                }
             }
             .navigationDestination(isPresented: $showCompare) {
                 if let pinned = appState.pinnedEntry,
@@ -118,6 +125,16 @@ struct ProgressTimelineView: View {
                 .id(currentEntry?.date)
                 .transition(.opacity.animation(.easeInOut(duration: 0.08)))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                // Workout overlay chip — shows if there's a logged workout for this day
+                if let entry = currentEntry,
+                   let log = appState.workoutStore?.log(for: entry.date) {
+                    WorkoutOverlayChip(log: log) {
+                        selectedWorkoutLog = log
+                        showWorkoutDetail = true
+                    }
+                    .padding(.bottom, 4)
+                }
 
                 // Compare button when pinned
                 if let pinned = appState.pinnedEntry,

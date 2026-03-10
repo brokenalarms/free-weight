@@ -5,7 +5,14 @@ struct ContentView: View {
 
     var body: some View {
         if appState.hasFolder {
-            ProgressTimelineView()
+            TabView {
+                Tab("Workout", systemImage: "figure.strengthtraining.traditional") {
+                    WorkoutLandingView()
+                }
+                Tab("Progress", systemImage: "photo.stack") {
+                    ProgressTimelineView()
+                }
+            }
         } else {
             OnboardingView()
         }

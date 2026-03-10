@@ -11,6 +11,7 @@ struct FreeWeightApp: App {
                 .task {
                     if let url = FolderBookmarkManager.resolveBookmark() {
                         appState.rootFolderURL = url
+                        appState.setupWorkoutStore()
                         await appState.refreshTimeline()
                     }
                 }
