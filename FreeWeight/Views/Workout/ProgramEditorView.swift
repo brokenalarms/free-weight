@@ -54,33 +54,41 @@ struct ProgramEditorView: View {
             }
 
             Section("Progression") {
-                Stepper("Load weeks: \(program.progression.loadWeeks)",
-                        value: $program.progression.loadWeeks, in: 1...8)
+                HStack {
+                    Text("Weight increase")
+                    Spacer()
+                    TextField("", value: $program.progression.weightIncrement, format: .number)
+                        .keyboardType(.decimalPad)
+                        .multilineTextAlignment(.trailing)
+                        .frame(width: 60)
+                    Text("kg")
+                }
+
+                Picker("On failure", selection: $program.progression.failureStrategy) {
+                    ForEach(FailureStrategy.allCases) { strategy in
+                        Text(strategy.label).tag(strategy)
+                    }
+                }
+
+                Stepper("Max retries: \(program.progression.maxRetries)",
+                        value: $program.progression.maxRetries, in: 1...5)
 
                 HStack {
-                    Text("Load increase")
+                    Text("Deload reduction")
                     Spacer()
-                    TextField("", value: $program.progression.loadPercent, format: .number)
+                    TextField("", value: $program.progression.deloadPercent, format: .number)
                         .keyboardType(.decimalPad)
                         .multilineTextAlignment(.trailing)
                         .frame(width: 60)
                     Text("%")
                 }
 
-                Stepper("Deload weeks: \(program.progression.deloadWeeks)",
-                        value: $program.progression.deloadWeeks, in: 0...4)
-
-                if program.progression.deloadWeeks > 0 {
-                    HStack {
-                        Text("Deload reduction")
-                        Spacer()
-                        TextField("", value: $program.progression.deloadPercent, format: .number)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 60)
-                        Text("%")
-                    }
-                }
+                Stepper(
+                    program.progression.deloadEveryNWeeks > 0
+                        ? "Scheduled deload: every \(program.progression.deloadEveryNWeeks) weeks"
+                        : "Scheduled deload: off",
+                    value: $program.progression.deloadEveryNWeeks, in: 0...12
+                )
 
                 Text(program.progression.summary)
                     .font(.caption)

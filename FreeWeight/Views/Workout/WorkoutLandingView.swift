@@ -50,11 +50,7 @@ struct WorkoutLandingView: View {
                 .font(.largeTitle.bold())
                 .padding(.top, 4)
 
-            // Progression status
-            progressionChip(program: program)
-                .padding(.top, 12)
-
-            // Exercise preview
+            // Exercise preview with computed targets
             exercisePreview(template: next, program: program)
                 .padding(.top, 24)
 
@@ -135,32 +131,28 @@ struct WorkoutLandingView: View {
     }
 
     @ViewBuilder
-    private func progressionChip(program: Program) -> some View {
-        let weekInCycle = program.currentWeekInCycle
-        let isDeload = weekInCycle >= program.progression.loadWeeks
-
-        HStack(spacing: 6) {
-            Circle()
-                .fill(isDeload ? .orange : .green)
-                .frame(width: 8, height: 8)
-            Text(isDeload ? "Deload Week" : "Week \(weekInCycle + 1) of \(program.progression.loadWeeks)")
-                .font(.caption.weight(.medium))
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(.quaternary, in: Capsule())
-    }
-
-    @ViewBuilder
     private func exercisePreview(template: WorkoutTemplate, program: Program) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             ForEach(template.exercises) { exercise in
+                let target = store.nextTarget(
+                    exercise: exercise,
+                    templateName: template.name,
+                    progression: program.progression
+                )
                 HStack {
+                    Image(systemName: exercise.category.icon)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(width: 16)
                     Text(exercise.name)
                         .font(.subheadline)
+                    if target.isDeload {
+                        Text("DL")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(.orange)
+                    }
                     Spacer()
-                    let adjusted = program.adjustedWeight(base: exercise.weight)
-                    Text("\(exercise.targetSets)×\(exercise.targetReps) @ \(formatWeight(adjusted)) kg")
+                    Text(target.display(for: exercise.category, durationSeconds: exercise.durationSeconds))
                         .font(.subheadline.monospacedDigit())
                         .foregroundStyle(.secondary)
                 }
@@ -169,9 +161,5 @@ struct WorkoutLandingView: View {
         .padding()
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
         .padding(.horizontal, 24)
-    }
-
-    private func formatWeight(_ w: Double) -> String {
-        w.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", w) : String(format: "%.1f", w)
     }
 }

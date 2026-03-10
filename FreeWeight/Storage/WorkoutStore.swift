@@ -140,10 +140,187 @@ final class WorkoutStore {
         logs[Calendar.current.startOfDay(for: date)]
     }
 
+    // MARK: - Performance History
+
+    /// Find the most recent logged performances of a given exercise
+    /// across all sessions of a specific template, sorted newest first.
+    func recentPerformances(
+        exerciseName: String,
+        templateName: String,
+        limit: Int = 5
+    ) -> [WorkoutLog.LoggedExercise] {
+        logs.values
+            .filter { $0.templateName == templateName }
+            .sorted { $0.date > $1.date }
+            .prefix(limit)
+            .compactMap { log in
+                log.exercises.first { $0.name == exerciseName }
+            }
+    }
+
+    /// Calculate the next target for an exercise based on last performance
+    /// and the program's progression rule.
+    func nextTarget(
+        exercise: Exercise,
+        templateName: String,
+        progression: ProgressionRule
+    ) -> ExerciseTarget {
+        let history = recentPerformances(
+            exerciseName: exercise.name,
+            templateName: templateName
+        )
+
+        // No history — use template defaults
+        guard let lastPerformance = history.first else {
+            return ExerciseTarget(
+                weight: exercise.weight,
+                reps: exercise.targetReps,
+                sets: exercise.targetSets,
+                isDeload: false
+            )
+        }
+
+        let completedSets = lastPerformance.sets.filter { $0.completed }
+        let hitAllSets = completedSets.count >= exercise.targetSets
+        let hitAllReps = hitAllSets && completedSets.allSatisfy { $0.reps >= exercise.targetReps }
+        let lastWeight = completedSets.first?.weight ?? exercise.weight
+        let lastReps = completedSets.first?.reps ?? exercise.targetReps
+
+        // Scheduled deload check
+        if progression.deloadEveryNWeeks > 0 {
+            let sessionsForThisTemplate = logs.values
+                .filter { $0.templateName == templateName }
+                .count
+            let rotationCount = sessionsForThisTemplate
+            if let program = activeProgram, !program.rotation.isEmpty {
+                let weeksCompleted = rotationCount / program.rotation.count
+                let cycleLen = progression.deloadEveryNWeeks
+                if cycleLen > 0 && weeksCompleted > 0 && weeksCompleted % cycleLen == 0 {
+                    // Check if last session was already a deload
+                    let deloadWeight = roundToPlate(lastWeight * (1.0 - progression.deloadPercent / 100.0))
+                    if lastWeight > deloadWeight + 0.1 {
+                        return ExerciseTarget(
+                            weight: deloadWeight,
+                            reps: exercise.targetReps,
+                            sets: exercise.targetSets,
+                            isDeload: true
+                        )
+                    }
+                }
+            }
+        }
+
+        // Success — hit all target sets × reps: increase weight
+        if hitAllReps {
+            let newWeight = roundToPlate(lastWeight + progression.weightIncrement)
+            return ExerciseTarget(
+                weight: newWeight,
+                reps: exercise.targetReps,
+                sets: exercise.targetSets,
+                isDeload: false
+            )
+        }
+
+        // Failure — apply failure strategy
+        let consecutiveFailures = countConsecutiveFailures(
+            history: history,
+            targetReps: exercise.targetReps,
+            targetSets: exercise.targetSets
+        )
+
+        switch progression.failureStrategy {
+        case .retrySameWeight:
+            if consecutiveFailures >= progression.maxRetries {
+                // Deload
+                let deloaded = roundToPlate(lastWeight * (1.0 - progression.deloadPercent / 100.0))
+                return ExerciseTarget(
+                    weight: deloaded,
+                    reps: exercise.targetReps,
+                    sets: exercise.targetSets,
+                    isDeload: true
+                )
+            }
+            // Retry same
+            return ExerciseTarget(
+                weight: lastWeight,
+                reps: exercise.targetReps,
+                sets: exercise.targetSets,
+                isDeload: false
+            )
+
+        case .dropReps:
+            // Find the current rep tier
+            let tiers = progression.repTiers.isEmpty ? [5, 3, 1] : progression.repTiers
+            let currentTierIndex = tiers.firstIndex(where: { $0 <= lastReps }) ?? 0
+
+            if hitAllSets && lastReps >= (tiers[safe: currentTierIndex] ?? lastReps) {
+                // Hit the lower rep target — bump weight, reset to top tier
+                let newWeight = roundToPlate(lastWeight + progression.weightIncrement)
+                return ExerciseTarget(
+                    weight: newWeight,
+                    reps: tiers[0],
+                    sets: exercise.targetSets,
+                    isDeload: false
+                )
+            }
+
+            // Drop to next tier
+            let nextTierIndex = min(currentTierIndex + 1, tiers.count - 1)
+            if nextTierIndex > currentTierIndex {
+                return ExerciseTarget(
+                    weight: lastWeight,
+                    reps: tiers[nextTierIndex],
+                    sets: exercise.targetSets,
+                    isDeload: false
+                )
+            }
+
+            // At lowest tier and still failing — deload
+            let deloaded = roundToPlate(lastWeight * (1.0 - progression.deloadPercent / 100.0))
+            return ExerciseTarget(
+                weight: deloaded,
+                reps: tiers[0],
+                sets: exercise.targetSets,
+                isDeload: true
+            )
+
+        case .dropWeight:
+            let deloaded = roundToPlate(lastWeight * (1.0 - progression.deloadPercent / 100.0))
+            return ExerciseTarget(
+                weight: deloaded,
+                reps: exercise.targetReps,
+                sets: exercise.targetSets,
+                isDeload: false
+            )
+        }
+    }
+
+    // MARK: - Helpers
+
+    /// Count how many consecutive recent sessions failed to hit the target.
+    private func countConsecutiveFailures(
+        history: [WorkoutLog.LoggedExercise],
+        targetReps: Int,
+        targetSets: Int
+    ) -> Int {
+        var count = 0
+        for perf in history {
+            let completed = perf.sets.filter { $0.completed }
+            let hitAll = completed.count >= targetSets
+                && completed.allSatisfy { $0.reps >= targetReps }
+            if hitAll { break }
+            count += 1
+        }
+        return count
+    }
+
+    /// Round to nearest 2.5 kg plate increment
+    private func roundToPlate(_ weight: Double) -> Double {
+        (weight / 2.5).rounded() * 2.5
+    }
+
     // MARK: - Export
 
-    /// Export the active program as a portable JSON file.
-    /// Returns a temporary file URL suitable for UIActivityViewController / ShareLink.
     func exportProgram() throws -> URL {
         guard let program = activeProgram else {
             throw WorkoutStoreError.noProgramToExport
@@ -156,7 +333,6 @@ final class WorkoutStore {
         return tempURL
     }
 
-    /// Export all workout logs as a single JSON file.
     func exportLogs() throws -> URL {
         let allLogs = logs.values.sorted { $0.date < $1.date }
         let export = LogsExport(schemaVersion: 1, logs: Array(allLogs))
@@ -169,14 +345,12 @@ final class WorkoutStore {
 
     // MARK: - Import
 
-    /// Import a program from a .fwprogram JSON file.
     func importProgram(from url: URL) throws -> Program {
         let data = try Data(contentsOf: url)
         let export = try decoder.decode(ProgramExport.self, from: data)
         return export.program
     }
 
-    /// Import logs from a .fwlogs JSON file, merging with existing.
     func importLogs(from url: URL) throws -> Int {
         let data = try Data(contentsOf: url)
         let export = try decoder.decode(LogsExport.self, from: data)
@@ -212,7 +386,7 @@ enum WorkoutStoreError: LocalizedError {
     }
 }
 
-// MARK: - String Helpers
+// MARK: - Helpers
 
 extension String {
     func sanitizedFilename() -> String {
@@ -224,5 +398,11 @@ extension String {
             .joined()
             .trimmingCharacters(in: .whitespaces)
             .replacingOccurrences(of: " ", with: "-")
+    }
+}
+
+extension Array {
+    subscript(safe index: Int) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
 }

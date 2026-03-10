@@ -55,8 +55,20 @@ struct ExerciseRowEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            TextField("Exercise name", text: $exercise.name)
-                .font(.headline)
+            HStack {
+                Image(systemName: exercise.category.icon)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                TextField("Exercise name", text: $exercise.name)
+                    .font(.headline)
+            }
+
+            Picker("Category", selection: $exercise.category) {
+                ForEach(ExerciseCategory.allCases) { cat in
+                    Label(cat.label, systemImage: cat.icon).tag(cat)
+                }
+            }
+            .pickerStyle(.segmented)
 
             HStack(spacing: 16) {
                 HStack(spacing: 4) {
@@ -70,26 +82,53 @@ struct ExerciseRowEditor: View {
                         .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
                 }
 
-                HStack(spacing: 4) {
-                    Text("Reps")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    TextField("", value: $exercise.targetReps, format: .number)
-                        .keyboardType(.numberPad)
-                        .frame(width: 40)
-                        .multilineTextAlignment(.center)
-                        .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
-                }
+                switch exercise.category {
+                case .strength:
+                    HStack(spacing: 4) {
+                        Text("Reps")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        TextField("", value: $exercise.targetReps, format: .number)
+                            .keyboardType(.numberPad)
+                            .frame(width: 40)
+                            .multilineTextAlignment(.center)
+                            .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
+                    }
 
-                HStack(spacing: 4) {
-                    Text("kg")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    TextField("", value: $exercise.weight, format: .number)
-                        .keyboardType(.decimalPad)
-                        .frame(width: 50)
-                        .multilineTextAlignment(.center)
-                        .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
+                    HStack(spacing: 4) {
+                        Text("kg")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        TextField("", value: $exercise.weight, format: .number)
+                            .keyboardType(.decimalPad)
+                            .frame(width: 50)
+                            .multilineTextAlignment(.center)
+                            .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
+                    }
+
+                case .calisthenics:
+                    HStack(spacing: 4) {
+                        Text("Reps")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        TextField("", value: $exercise.targetReps, format: .number)
+                            .keyboardType(.numberPad)
+                            .frame(width: 40)
+                            .multilineTextAlignment(.center)
+                            .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
+                    }
+
+                case .mobility:
+                    HStack(spacing: 4) {
+                        Text("Duration (s)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        TextField("", value: $exercise.durationSeconds, format: .number)
+                            .keyboardType(.numberPad)
+                            .frame(width: 50)
+                            .multilineTextAlignment(.center)
+                            .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
+                    }
                 }
             }
         }

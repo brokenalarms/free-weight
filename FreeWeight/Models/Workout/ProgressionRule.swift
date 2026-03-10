@@ -1,51 +1,102 @@
 import Foundation
 
-/// Defines how a program auto-progresses weights.
-///
-/// Example: GZCLP style — load 2 weeks, deload 1 week
-///   ProgressionRule(loadWeeks: 2, loadPercent: 5.0, deloadWeeks: 1, deloadPercent: 10.0)
-///
-/// Example: Linear — just add weight every session
-///   ProgressionRule(loadWeeks: 1, loadPercent: 2.5, deloadWeeks: 0, deloadPercent: 0)
-struct ProgressionRule: Codable, Hashable {
-    /// Number of weeks to progressively load before deload
-    var loadWeeks: Int = 2
+/// How the program responds when you fail to hit target reps.
+enum FailureStrategy: String, Codable, Hashable, CaseIterable, Identifiable {
+    /// Retry same weight/reps next session. After `maxRetries`, deload.
+    /// Classic linear progression (StrongLifts, Starting Strength).
+    case retrySameWeight
 
-    /// Percentage to increase weight each load week
-    var loadPercent: Double = 5.0
+    /// Keep weight, drop rep target (e.g., 5→3→1). On success at lower reps, bump weight.
+    /// GZCLP T1 style.
+    case dropReps
 
-    /// Number of deload weeks in the cycle
-    var deloadWeeks: Int = 1
+    /// Keep reps, drop weight by deloadPercent. Build back up.
+    /// Standard percentage deload.
+    case dropWeight
 
-    /// Percentage to reduce from peak during deload
-    var deloadPercent: Double = 10.0
+    var id: String { rawValue }
 
-    /// Total cycle length
-    var cycleLength: Int { loadWeeks + deloadWeeks }
-
-    /// Given the week number within a cycle (0-based), return the weight multiplier.
-    /// Week 0..loadWeeks-1 = progressive load, loadWeeks..cycleLength-1 = deload
-    func multiplier(forWeekInCycle week: Int) -> Double {
-        let weekInCycle = week % cycleLength
-        if weekInCycle < loadWeeks {
-            // Progressive: base + (weekInCycle * loadPercent%)
-            return 1.0 + (Double(weekInCycle) * loadPercent / 100.0)
-        } else {
-            // Deload: reduce from peak
-            let peakMultiplier = 1.0 + (Double(loadWeeks - 1) * loadPercent / 100.0)
-            return peakMultiplier * (1.0 - deloadPercent / 100.0)
+    var label: String {
+        switch self {
+        case .retrySameWeight: "Retry same weight"
+        case .dropReps: "Drop reps, keep weight"
+        case .dropWeight: "Drop weight, keep reps"
         }
     }
+
+    var description: String {
+        switch self {
+        case .retrySameWeight: "Try the same weight again. Deload after repeated failures."
+        case .dropReps: "Lower the rep target but keep the weight. Progress when you hit the lower target."
+        case .dropWeight: "Reduce the weight and work back up at the same rep target."
+        }
+    }
+}
+
+/// Defines how a program auto-progresses weights based on performance.
+struct ProgressionRule: Codable, Hashable {
+    /// Weight increase (kg) when all sets/reps are hit
+    var weightIncrement: Double = 2.5
+
+    /// What to do when you fail to complete all target reps
+    var failureStrategy: FailureStrategy = .retrySameWeight
+
+    /// How many consecutive failures before auto-deload kicks in
+    var maxRetries: Int = 2
+
+    /// Percentage to reduce weight on deload
+    var deloadPercent: Double = 10.0
+
+    /// For .dropReps strategy: the rep tiers to cycle through
+    /// e.g., [5, 3, 1] means try 5 reps, if fail drop to 3, if fail drop to 1
+    var repTiers: [Int] = [5, 3, 1]
+
+    /// Scheduled deload: every N weeks, take a deload week (0 = never)
+    var deloadEveryNWeeks: Int = 4
 
     /// User-friendly description
     var summary: String {
-        if deloadWeeks == 0 {
-            return "+\(formatPercent(loadPercent))% weekly"
+        var parts: [String] = []
+        parts.append("+\(formatKg(weightIncrement)) kg on success")
+        parts.append("on fail: \(failureStrategy.label.lowercased())")
+        if deloadEveryNWeeks > 0 {
+            parts.append("deload every \(deloadEveryNWeeks) weeks")
         }
-        return "\(loadWeeks)w load +\(formatPercent(loadPercent))%, \(deloadWeeks)w deload -\(formatPercent(deloadPercent))%"
+        return parts.joined(separator: ", ")
     }
 
-    private func formatPercent(_ v: Double) -> String {
+    private func formatKg(_ v: Double) -> String {
         v.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", v) : String(format: "%.1f", v)
+    }
+}
+
+/// The computed next target for an exercise based on past performance.
+struct ExerciseTarget {
+    let weight: Double
+    let reps: Int
+    let sets: Int
+    let isDeload: Bool
+
+    /// Format: "4×5 @ 82.5 kg" for strength, "3×12" for calisthenics, "3×30s" for mobility
+    var display: String {
+        display(for: .strength, durationSeconds: 0)
+    }
+
+    func display(for category: ExerciseCategory, durationSeconds: Int = 0) -> String {
+        switch category {
+        case .strength:
+            return "\(sets)×\(reps) @ \(formatWeight(weight)) kg"
+        case .calisthenics:
+            return "\(sets)×\(reps)"
+        case .mobility:
+            if durationSeconds > 0 {
+                return "\(sets)×\(durationSeconds)s"
+            }
+            return "\(sets) sets"
+        }
+    }
+
+    private func formatWeight(_ w: Double) -> String {
+        w.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", w) : String(format: "%.1f", w)
     }
 }

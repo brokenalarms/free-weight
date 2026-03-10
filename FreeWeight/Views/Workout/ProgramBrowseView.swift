@@ -173,14 +173,14 @@ struct ProgramPreset: Identifiable {
         )
     }
 
-    static let allPresets: [ProgramPreset] = [ppl, gzclp, upperLower, fullBody]
+    static let allPresets: [ProgramPreset] = [ppl, gzclp, upperLower, fullBody, strengthMobility, calisthenicsHybrid]
 
     static let ppl = ProgramPreset(
         name: "Push / Pull / Legs",
         description: "Classic 6-day split. Each muscle group twice per week.",
         daysPerWeek: 6,
         templateNames: ["Push", "Pull", "Legs"],
-        progressionDescription: "+2.5% weekly, deload every 4th week",
+        progressionDescription: "+2.5 kg on success, retry on fail, deload every 4 weeks",
         templates: [
             WorkoutTemplate(name: "Push", exercises: [
                 Exercise(name: "Bench Press", targetSets: 4, targetReps: 8, weight: 60),
@@ -204,7 +204,13 @@ struct ProgramPreset: Identifiable {
                 Exercise(name: "Calf Raise", targetSets: 4, targetReps: 15, weight: 60),
             ]),
         ],
-        progression: ProgressionRule(loadWeeks: 3, loadPercent: 2.5, deloadWeeks: 1, deloadPercent: 10)
+        progression: ProgressionRule(
+            weightIncrement: 2.5,
+            failureStrategy: .retrySameWeight,
+            maxRetries: 2,
+            deloadPercent: 10,
+            deloadEveryNWeeks: 4
+        )
     )
 
     static let gzclp = ProgramPreset(
@@ -212,7 +218,7 @@ struct ProgramPreset: Identifiable {
         description: "Linear progression 4-day program. Great for intermediates.",
         daysPerWeek: 4,
         templateNames: ["Squat/Bench", "OHP/Dead", "Bench/Squat", "Dead/OHP"],
-        progressionDescription: "+5% every 2 weeks, 1 week deload",
+        progressionDescription: "+2.5 kg on success, drop reps on fail (5→3→1)",
         templates: [
             WorkoutTemplate(name: "Squat / Bench", exercises: [
                 Exercise(name: "Squat", targetSets: 5, targetReps: 3, weight: 80),
@@ -235,7 +241,14 @@ struct ProgramPreset: Identifiable {
                 Exercise(name: "Barbell Row", targetSets: 3, targetReps: 15, weight: 45),
             ]),
         ],
-        progression: ProgressionRule(loadWeeks: 2, loadPercent: 5.0, deloadWeeks: 1, deloadPercent: 10)
+        progression: ProgressionRule(
+            weightIncrement: 2.5,
+            failureStrategy: .dropReps,
+            maxRetries: 2,
+            deloadPercent: 10,
+            repTiers: [5, 3, 1],
+            deloadEveryNWeeks: 0
+        )
     )
 
     static let upperLower = ProgramPreset(
@@ -243,7 +256,7 @@ struct ProgramPreset: Identifiable {
         description: "4-day split alternating upper and lower body.",
         daysPerWeek: 4,
         templateNames: ["Upper A", "Lower A", "Upper B", "Lower B"],
-        progressionDescription: "+2.5% weekly, deload every 4th week",
+        progressionDescription: "+2.5 kg on success, retry on fail, deload every 4 weeks",
         templates: [
             WorkoutTemplate(name: "Upper A", exercises: [
                 Exercise(name: "Bench Press", targetSets: 4, targetReps: 6, weight: 60),
@@ -270,7 +283,13 @@ struct ProgramPreset: Identifiable {
                 Exercise(name: "Calf Raise", targetSets: 3, targetReps: 15, weight: 60),
             ]),
         ],
-        progression: ProgressionRule(loadWeeks: 3, loadPercent: 2.5, deloadWeeks: 1, deloadPercent: 10)
+        progression: ProgressionRule(
+            weightIncrement: 2.5,
+            failureStrategy: .retrySameWeight,
+            maxRetries: 2,
+            deloadPercent: 10,
+            deloadEveryNWeeks: 4
+        )
     )
 
     static let fullBody = ProgramPreset(
@@ -278,7 +297,7 @@ struct ProgramPreset: Identifiable {
         description: "Three full body sessions per week. Great for beginners.",
         daysPerWeek: 3,
         templateNames: ["Day A", "Day B", "Day C"],
-        progressionDescription: "+5% every 2 weeks, 1 week deload",
+        progressionDescription: "+2.5 kg on success, retry on fail, deload every 4 weeks",
         templates: [
             WorkoutTemplate(name: "Day A", exercises: [
                 Exercise(name: "Squat", targetSets: 3, targetReps: 5, weight: 60),
@@ -296,6 +315,113 @@ struct ProgramPreset: Identifiable {
                 Exercise(name: "Pull Up", targetSets: 3, targetReps: 8, weight: 0),
             ]),
         ],
-        progression: ProgressionRule(loadWeeks: 2, loadPercent: 5.0, deloadWeeks: 1, deloadPercent: 10)
+        progression: ProgressionRule(
+            weightIncrement: 2.5,
+            failureStrategy: .retrySameWeight,
+            maxRetries: 3,
+            deloadPercent: 10,
+            deloadEveryNWeeks: 0
+        )
+    )
+
+    static let strengthMobility = ProgramPreset(
+        name: "Strength + Mobility",
+        description: "Interleaves gym days with mobility/flexibility sessions you can do anywhere.",
+        daysPerWeek: 6,
+        templateNames: ["Push", "Mobility", "Pull", "Flexibility", "Legs", "Mobility"],
+        progressionDescription: "+2.5 kg on success, retry on fail, deload every 4 weeks",
+        templates: [
+            WorkoutTemplate(name: "Push", exercises: [
+                Exercise(name: "Bench Press", targetSets: 4, targetReps: 8, weight: 60),
+                Exercise(name: "Overhead Press", targetSets: 3, targetReps: 10, weight: 40),
+                Exercise(name: "Dips", category: .calisthenics, targetSets: 3, targetReps: 12, weight: 0),
+                Exercise(name: "Lateral Raise", targetSets: 3, targetReps: 15, weight: 10),
+            ]),
+            WorkoutTemplate(name: "Mobility A", exercises: [
+                Exercise(name: "Shoulder Dislocates", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 30),
+                Exercise(name: "Hip 90/90 Stretch", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 45),
+                Exercise(name: "Cat-Cow", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 30),
+                Exercise(name: "World's Greatest Stretch", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 30),
+                Exercise(name: "Dead Hang", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 30),
+            ]),
+            WorkoutTemplate(name: "Pull", exercises: [
+                Exercise(name: "Deadlift", targetSets: 3, targetReps: 5, weight: 100),
+                Exercise(name: "Barbell Row", targetSets: 4, targetReps: 8, weight: 60),
+                Exercise(name: "Pull Up", category: .calisthenics, targetSets: 3, targetReps: 8, weight: 0),
+                Exercise(name: "Face Pull", targetSets: 3, targetReps: 15, weight: 15),
+            ]),
+            WorkoutTemplate(name: "Flexibility", exercises: [
+                Exercise(name: "Hamstring Stretch", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 45),
+                Exercise(name: "Pigeon Pose", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 45),
+                Exercise(name: "Couch Stretch", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 45),
+                Exercise(name: "Thoracic Extension", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 30),
+                Exercise(name: "Pancake Stretch", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 45),
+            ]),
+            WorkoutTemplate(name: "Legs", exercises: [
+                Exercise(name: "Squat", targetSets: 4, targetReps: 6, weight: 80),
+                Exercise(name: "Romanian Deadlift", targetSets: 3, targetReps: 10, weight: 70),
+                Exercise(name: "Bulgarian Split Squat", category: .calisthenics, targetSets: 3, targetReps: 10, weight: 0),
+                Exercise(name: "Calf Raise", targetSets: 4, targetReps: 15, weight: 60),
+            ]),
+            WorkoutTemplate(name: "Mobility B", exercises: [
+                Exercise(name: "Foam Roll Quads", category: .mobility, targetSets: 2, targetReps: 1, weight: 0, durationSeconds: 60),
+                Exercise(name: "Foam Roll Back", category: .mobility, targetSets: 2, targetReps: 1, weight: 0, durationSeconds: 60),
+                Exercise(name: "Ankle Circles", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 30),
+                Exercise(name: "Wall Slides", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 30),
+                Exercise(name: "Deep Squat Hold", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 45),
+            ]),
+        ],
+        progression: ProgressionRule(
+            weightIncrement: 2.5,
+            failureStrategy: .retrySameWeight,
+            maxRetries: 2,
+            deloadPercent: 10,
+            deloadEveryNWeeks: 4
+        )
+    )
+
+    static let calisthenicsHybrid = ProgramPreset(
+        name: "Calisthenics Hybrid",
+        description: "Bodyweight skills with barbell compounds. Mobility built into every session.",
+        daysPerWeek: 4,
+        templateNames: ["Upper", "Mobility", "Lower", "Mobility"],
+        progressionDescription: "+2.5 kg compounds, bodyweight reps progress, deload every 4 weeks",
+        templates: [
+            WorkoutTemplate(name: "Upper Strength + Skills", exercises: [
+                Exercise(name: "Bench Press", targetSets: 4, targetReps: 6, weight: 60),
+                Exercise(name: "Pull Up", category: .calisthenics, targetSets: 4, targetReps: 8, weight: 0),
+                Exercise(name: "Push Up", category: .calisthenics, targetSets: 3, targetReps: 20, weight: 0),
+                Exercise(name: "Inverted Row", category: .calisthenics, targetSets: 3, targetReps: 12, weight: 0),
+                Exercise(name: "L-Sit Hold", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 20),
+            ]),
+            WorkoutTemplate(name: "Upper Mobility", exercises: [
+                Exercise(name: "Shoulder Dislocates", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 30),
+                Exercise(name: "Chest Opener Stretch", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 30),
+                Exercise(name: "Wrist Circles", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 30),
+                Exercise(name: "Dead Hang", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 30),
+                Exercise(name: "Thoracic Rotation", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 30),
+            ]),
+            WorkoutTemplate(name: "Lower Strength + Skills", exercises: [
+                Exercise(name: "Squat", targetSets: 4, targetReps: 6, weight: 80),
+                Exercise(name: "Deadlift", targetSets: 3, targetReps: 5, weight: 100),
+                Exercise(name: "Pistol Squat", category: .calisthenics, targetSets: 3, targetReps: 5, weight: 0),
+                Exercise(name: "Glute Bridge", category: .calisthenics, targetSets: 3, targetReps: 15, weight: 0),
+                Exercise(name: "Deep Squat Hold", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 45),
+            ]),
+            WorkoutTemplate(name: "Lower Mobility", exercises: [
+                Exercise(name: "Hip 90/90 Stretch", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 45),
+                Exercise(name: "Pigeon Pose", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 45),
+                Exercise(name: "Couch Stretch", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 45),
+                Exercise(name: "Hamstring Stretch", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 45),
+                Exercise(name: "Ankle Mobility", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 30),
+            ]),
+        ],
+        progression: ProgressionRule(
+            weightIncrement: 2.5,
+            failureStrategy: .retrySameWeight,
+            maxRetries: 2,
+            deloadPercent: 10,
+            deloadEveryNWeeks: 4
+        )
     )
 }
