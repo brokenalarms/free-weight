@@ -9,9 +9,12 @@ struct FreeWeightApp: App {
             ContentView()
                 .environment(appState)
                 .task {
+                    // Workout data lives in app Documents / iCloud — always load
+                    appState.loadWorkoutData()
+
+                    // Photos live in user-picked folder
                     if let url = FolderBookmarkManager.resolveBookmark() {
                         appState.rootFolderURL = url
-                        appState.setupWorkoutStore()
                         await appState.refreshTimeline()
                     }
                 }

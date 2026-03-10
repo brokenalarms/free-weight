@@ -7,6 +7,8 @@ struct ProgramBrowseView: View {
     @Environment(AppState.self) private var appState
     @State private var showCustomEditor = false
     @State private var selectedPreset: ProgramPreset?
+    @State private var showImportPicker = false
+    @State private var importedProgram: Program?
 
     var body: some View {
         ScrollView {
@@ -27,6 +29,30 @@ struct ProgramBrowseView: View {
                         }
                     }
                 }
+                .padding(.horizontal)
+
+                // Import
+                Button {
+                    showImportPicker = true
+                } label: {
+                    HStack {
+                        Image(systemName: "square.and.arrow.down")
+                            .font(.title2)
+                        VStack(alignment: .leading) {
+                            Text("Import Program")
+                                .font(.headline)
+                            Text("Load a shared .fwprogram file")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding()
+                    .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+                }
+                .buttonStyle(.plain)
                 .padding(.horizontal)
 
                 // Custom
@@ -63,6 +89,18 @@ struct ProgramBrowseView: View {
         .sheet(isPresented: $showCustomEditor) {
             NavigationStack {
                 ProgramEditorView(program: Program(name: ""))
+            }
+        }
+        .sheet(isPresented: $showImportPicker) {
+            ProgramImportPicker { url in
+                if let program = try? appState.workoutStore.importProgram(from: url) {
+                    importedProgram = program
+                }
+            }
+        }
+        .sheet(item: $importedProgram) { program in
+            NavigationStack {
+                ProgramEditorView(program: program)
             }
         }
     }

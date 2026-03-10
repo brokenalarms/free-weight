@@ -97,13 +97,11 @@ struct QuickLogView: View {
             durationSeconds: duration
         )
 
-        if let store = appState.workoutStore {
-            try? store.saveLog(log)
-            // Advance program rotation
-            if var prog = store.activeProgram {
-                prog.advanceRotation()
-                try? store.saveProgram(prog)
-            }
+        let store = appState.workoutStore
+        try? store.saveLog(log)
+        if var prog = store.activeProgram {
+            prog.advanceRotation()
+            try? store.saveProgram(prog)
         }
 
         dismiss()

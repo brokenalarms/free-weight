@@ -10,19 +10,21 @@ struct ProgressTimelineView: View {
     @State private var showWorkoutDetail = false
     @State private var selectedWorkoutLog: WorkoutLog?
 
-    private var entries: [ProgressEntry] { appState.timeline.entries }
+    private var days: [TimelineDay] { appState.timelineDays }
 
-    private var currentEntry: ProgressEntry? {
-        guard entries.indices.contains(selectedIndex) else { return nil }
-        return entries[selectedIndex]
+    private var currentDay: TimelineDay? {
+        guard days.indices.contains(selectedIndex) else { return nil }
+        return days[selectedIndex]
     }
+
+    private var currentEntry: ProgressEntry? { currentDay?.photoEntry }
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.black.ignoresSafeArea()
 
-                if entries.isEmpty {
+                if !appState.hasTimelineContent {
                     emptyState
                 } else {
                     timelineContent
@@ -83,11 +85,11 @@ struct ProgressTimelineView: View {
                 .font(.system(size: 48))
                 .foregroundStyle(.secondary)
 
-            Text("No Progress Photos Yet")
+            Text("No Progress Yet")
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(.primary)
 
-            Text("Take your first progress photo to start tracking.")
+            Text("Take a progress photo or log a workout to get started.")
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
@@ -104,31 +106,37 @@ struct ProgressTimelineView: View {
     @ViewBuilder
     private var timelineContent: some View {
         VStack(spacing: 0) {
-            // Angle picker (only show if current entry has multiple angles)
-            if let entry = currentEntry, entry.photos.count > 1 {
-                Picker("Angle", selection: $displayedAngle) {
-                    ForEach(PhotoAngle.allCases.filter { entry.photos[$0] != nil }) { angle in
-                        Text(angle.label).tag(angle)
+            if let day = currentDay {
+                // Angle picker (only show if current day has photo with multiple angles)
+                if let entry = day.photoEntry, entry.photos.count > 1 {
+                    Picker("Angle", selection: $displayedAngle) {
+                        ForEach(PhotoAngle.allCases.filter { entry.photos[$0] != nil }) { angle in
+                            Text(angle.label).tag(angle)
+                        }
                     }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, 40)
+                    .padding(.top, 8)
                 }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, 40)
-                .padding(.top, 8)
-            }
 
-            // Main photo display
-            if let rootURL = appState.rootFolderURL {
-                ScopedPhotoView(
-                    url: currentEntry?.photos[displayedAngle] ?? currentEntry?.primaryPhoto,
-                    scopedURL: rootURL
-                )
-                .id(currentEntry?.date)
-                .transition(.opacity.animation(.easeInOut(duration: 0.08)))
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // Main content area
+                if let entry = day.photoEntry, let rootURL = appState.rootFolderURL {
+                    // Day has a photo — show it
+                    ScopedPhotoView(
+                        url: entry.photos[displayedAngle] ?? entry.primaryPhoto,
+                        scopedURL: rootURL
+                    )
+                    .id(day.date)
+                    .transition(.opacity.animation(.easeInOut(duration: 0.08)))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if day.hasWorkout {
+                    // Workout-only day — show workout card
+                    workoutOnlyCard(day: day)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
 
-                // Workout overlay chip — shows if there's a logged workout for this day
-                if let entry = currentEntry,
-                   let log = appState.workoutStore?.log(for: entry.date) {
+                // Workout overlay chip — on days with both photo and workout
+                if day.hasPhoto, let log = day.workoutLog {
                     WorkoutOverlayChip(log: log) {
                         selectedWorkoutLog = log
                         showWorkoutDetail = true
@@ -153,21 +161,69 @@ struct ProgressTimelineView: View {
                 }
 
                 // Date label
-                if let entry = currentEntry {
-                    Text(entry.date, format: .dateTime.month(.wide).day().year())
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.bottom, 4)
-                }
+                Text(day.date, format: .dateTime.month(.wide).day().year())
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.bottom, 4)
 
                 // Scrubber
                 TimelineScrubber(
-                    entries: entries,
+                    days: days,
                     selectedIndex: $selectedIndex,
-                    scopedURL: rootURL
+                    scopedURL: appState.rootFolderURL
                 )
                 .frame(height: 80)
                 .padding(.bottom, 8)
+            }
+        }
+    }
+
+    /// Full card shown for workout-only days (no photo)
+    @ViewBuilder
+    private func workoutOnlyCard(day: TimelineDay) -> some View {
+        if let log = day.workoutLog {
+            VStack(spacing: 16) {
+                Spacer()
+
+                Image(systemName: "figure.strengthtraining.traditional")
+                    .font(.system(size: 44))
+                    .foregroundStyle(.secondary)
+
+                Text(log.templateName)
+                    .font(.title2.bold())
+
+                Text(log.programName)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(log.exercises) { exercise in
+                        if let best = exercise.sets.max(by: { $0.weight < $1.weight }) {
+                            HStack {
+                                Text(exercise.name)
+                                    .font(.subheadline)
+                                Spacer()
+                                Text("\(formatWeight(best.weight)) kg × \(best.reps)")
+                                    .font(.subheadline.monospacedDigit())
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+                .padding()
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .padding(.horizontal, 24)
+
+                Button {
+                    selectedWorkoutLog = log
+                    showWorkoutDetail = true
+                } label: {
+                    Text("View Full Workout")
+                        .font(.subheadline.weight(.medium))
+                }
+                .buttonStyle(.bordered)
+
+                Spacer()
             }
         }
     }
@@ -187,5 +243,9 @@ struct ProgressTimelineView: View {
                       ? "pin.slash.fill" : "pin")
             }
         }
+    }
+
+    private func formatWeight(_ w: Double) -> String {
+        w.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", w) : String(format: "%.1f", w)
     }
 }

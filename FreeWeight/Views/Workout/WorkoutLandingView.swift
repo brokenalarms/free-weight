@@ -9,9 +9,11 @@ struct WorkoutLandingView: View {
     @State private var showActiveSession = false
     @State private var showBrowse = false
     @State private var showEditProgram = false
+    @State private var exportURL: URL?
+    @State private var showExportShare = false
 
-    private var store: WorkoutStore? { appState.workoutStore }
-    private var program: Program? { store?.activeProgram }
+    private var store: WorkoutStore { appState.workoutStore }
+    private var program: Program? { store.activeProgram }
 
     var body: some View {
         NavigationStack {
@@ -91,8 +93,22 @@ struct WorkoutLandingView: View {
                     } label: {
                         Label("Switch Program", systemImage: "arrow.triangle.2.circlepath")
                     }
+                    Divider()
+                    Button {
+                        exportURL = try? store.exportProgram()
+                        if exportURL != nil { showExportShare = true }
+                    } label: {
+                        Label("Share Program", systemImage: "square.and.arrow.up")
+                    }
+                    Button {
+                        exportURL = try? store.exportLogs()
+                        if exportURL != nil { showExportShare = true }
+                    } label: {
+                        Label("Export Workout Logs", systemImage: "doc.text")
+                    }
+                    Divider()
                     Button(role: .destructive) {
-                        try? store?.clearProgram()
+                        try? store.clearProgram()
                     } label: {
                         Label("Remove Program", systemImage: "trash")
                     }
@@ -109,6 +125,11 @@ struct WorkoutLandingView: View {
         .sheet(isPresented: $showEditProgram) {
             NavigationStack {
                 ProgramEditorView(program: program)
+            }
+        }
+        .sheet(isPresented: $showExportShare) {
+            if let url = exportURL {
+                ShareSheet(items: [url])
             }
         }
     }

@@ -113,8 +113,7 @@ struct ProgramEditorView: View {
     }
 
     private func saveProgram() {
-        guard let store = appState.workoutStore else { return }
-        try? store.saveProgram(program)
+        try? appState.workoutStore.saveProgram(program)
         dismiss()
     }
 }
