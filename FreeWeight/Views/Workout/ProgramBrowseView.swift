@@ -173,7 +173,7 @@ struct ProgramPreset: Identifiable {
         )
     }
 
-    static let allPresets: [ProgramPreset] = [ppl, gzclp, upperLower, fullBody, strengthMobility, calisthenicsHybrid]
+    static let allPresets: [ProgramPreset] = [ppl, gzclp, upperLower, fullBody, mapsAnabolic, strengthMobility, calisthenicsHybrid]
 
     static let ppl = ProgramPreset(
         name: "Push / Pull / Legs",
@@ -321,6 +321,47 @@ struct ProgramPreset: Identifiable {
             maxRetries: 3,
             deloadPercent: 10,
             deloadEveryNWeeks: 0
+        )
+    )
+
+    static let mapsAnabolic = ProgramPreset(
+        name: "MAPS Periodized Full Body",
+        description: "3-day full body with compound focus. Periodized progression with scheduled deloads.",
+        daysPerWeek: 3,
+        templateNames: ["Full Body A", "Full Body B", "Full Body C"],
+        progressionDescription: "+2.5 kg on success, retry on fail, deload every 4 weeks",
+        templates: [
+            WorkoutTemplate(name: "Full Body A", exercises: [
+                Exercise(name: "Barbell Squat", targetSets: 4, targetReps: 8, weight: 70),
+                Exercise(name: "Dumbbell Bench Press", targetSets: 3, targetReps: 10, weight: 25),
+                Exercise(name: "Barbell Row", targetSets: 3, targetReps: 10, weight: 50),
+                Exercise(name: "Dumbbell Shoulder Press", targetSets: 3, targetReps: 10, weight: 17.5),
+                Exercise(name: "Bicep Curl", targetSets: 2, targetReps: 12, weight: 12.5),
+                Exercise(name: "Tricep Overhead Extension", targetSets: 2, targetReps: 12, weight: 15),
+            ]),
+            WorkoutTemplate(name: "Full Body B", exercises: [
+                Exercise(name: "Deadlift", targetSets: 4, targetReps: 6, weight: 90),
+                Exercise(name: "Incline Dumbbell Press", targetSets: 3, targetReps: 10, weight: 22.5),
+                Exercise(name: "Pull Up", category: .calisthenics, targetSets: 3, targetReps: 8, weight: 0),
+                Exercise(name: "Lateral Raise", targetSets: 3, targetReps: 15, weight: 8),
+                Exercise(name: "Leg Curl", targetSets: 3, targetReps: 12, weight: 35),
+                Exercise(name: "Calf Raise", targetSets: 3, targetReps: 15, weight: 50),
+            ]),
+            WorkoutTemplate(name: "Full Body C", exercises: [
+                Exercise(name: "Front Squat", targetSets: 3, targetReps: 8, weight: 50),
+                Exercise(name: "Bench Press", targetSets: 4, targetReps: 8, weight: 60),
+                Exercise(name: "Cable Row", targetSets: 3, targetReps: 12, weight: 45),
+                Exercise(name: "Romanian Deadlift", targetSets: 3, targetReps: 10, weight: 60),
+                Exercise(name: "Face Pull", targetSets: 3, targetReps: 15, weight: 12.5),
+                Exercise(name: "Plank", category: .mobility, targetSets: 3, targetReps: 1, weight: 0, durationSeconds: 45),
+            ]),
+        ],
+        progression: ProgressionRule(
+            weightIncrement: 2.5,
+            failureStrategy: .retrySameWeight,
+            maxRetries: 2,
+            deloadPercent: 10,
+            deloadEveryNWeeks: 4
         )
     )
 
